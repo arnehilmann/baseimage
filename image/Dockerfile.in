@@ -9,30 +9,34 @@ RUN apt-get upgrade -y
 
 # Install additional packages
 RUN apt-get install -y less curl man unixodbc libssl1.0.0 libwxgtk2.8-0 make
+RUN apt-get install -y host git wget
 RUN apt-get install -y --reinstall openssh-server
 
+# create host keys
 RUN /etc/my_init.d/00_regen_ssh_host_keys.sh
 
+# enable root access
 RUN ssh-keygen -q -t rsa -f /root/.ssh/id_rsa -N ""
 RUN cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 RUN echo "root:root" | chpasswd
-RUN apt-get install -y host
-RUN apt-get install -y git
-RUN apt-get install -y wget
 
+# enable user access
 RUN mkdir -p /home/$USER
 RUN useradd -u $USERID -r -g users -d /home/$USER -s /bin/bash -c "Docker image user" $USER
-RUN echo "$USER:$USER" | chpasswd
 RUN chown -R $USER:users /home/$USER
+RUN echo "$USER:$USER" | chpasswd
 USER $USER
 RUN mkdir -p /home/$USER/.ssh
 RUN ssh-keygen -q -t rsa -f /home/$USER/.ssh/id_rsa -N ""
 RUN cp /home/$USER/.ssh/id_rsa.pub /home/$USER/.ssh/authorized_keys
 ADD tmp/id_rsa.pub /home/$USER/.ssh/authorized_keys2
-
 USER root
+RUN chown -R $USER:users /home/$USER
+
+# initialize container after starting
 ADD ./init-container /init-container
 EXPOSE 22
 CMD ["/init-container", "$USER"]
 
+# cleanup
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
