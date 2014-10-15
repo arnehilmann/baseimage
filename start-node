@@ -1,0 +1,59 @@
+#!/bin/bash
+set -u -e -E -C -o pipefail
+
+IMAGE=${DOCKER_IMAGE:-arne/baseimage}
+
+DNSMASQ_D=/etc/dnsmasq.d
+
+NR=${1:-1}
+
+NAME="node$NR"
+
+if docker inspect $NAME > /dev/null 2>&1; then
+    echo "housekeeping started"
+    echo "container $NAME already known"
+    echo -n "stopping "
+    docker stop $NAME
+    docker stop $NAME
+    sleep 1
+    echo -n "removing "
+    if ! docker rm $NAME; then
+        echo "cannot remove container $NAME, aborting..."
+        exit 2
+    fi
+    echo "housekeeping finished"
+fi
+
+if [[ -x ./init ]]; then
+    CMD=./init
+else
+    CMD=
+fi
+
+DOCKER_ID=$(docker run -d \
+    -v $(pwd):/docker \
+    -w /docker \
+    -h $NAME \
+    --name=$NAME \
+    $IMAGE \
+    $CMD)
+
+IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $DOCKER_ID)
+
+for OLD_NAME in $(grep -l $NAME $DNSMASQ_D/*); do
+    rm -fv $OLD_NAME
+done
+for OLD_IP in $(grep -l $IP $DNSMASQ_D/*); do
+    rm -fv $OLD_IP
+done
+
+echo "address=/$NAME/$IP" >  $DNSMASQ_D/$NAME
+#ssh-keygen -f "$HOME/.ssh/known_hosts" -R $NAME
+
+if [[ -x /usr/bin/systemctl ]]; then
+    sudo systemctl restart dnsmasq
+else
+    sudo service dnsmasq restart
+fi
+
+echo "$NAME/$IP started"

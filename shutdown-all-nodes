@@ -1,0 +1,18 @@
+#!/bin/bash
+set -u -e -E
+
+IMAGE=${DOCKER_IMAGE:-arne/baseimage}
+
+echo "shutting down all $IMAGE nodes"
+for NODE_ID in $(docker ps | grep $IMAGE | grep node | cut -d " " -f1); do
+    NODE_NAME=$(docker inspect --format='{{.Config.Hostname}}' $NODE_ID)
+    echo "initiating shutdown sequence for $NODE_NAME"
+    docker stop $NODE_NAME &
+done
+echo
+
+echo "waiting for nodes to shut down"
+wait
+
+echo
+echo "done."
