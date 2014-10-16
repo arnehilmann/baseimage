@@ -3,11 +3,9 @@ set -u -e -E -C -o pipefail
 
 IMAGE=${DOCKER_IMAGE:-arne/baseimage}
 
-DNSMASQ_D=/etc/dnsmasq.d
-
 NR=${1:-1}
-
 NAME="node$NR"
+DOMAIN="node.consul"
 
 if docker inspect $NAME > /dev/null 2>&1; then
     echo "housekeeping started"
@@ -30,30 +28,36 @@ else
     CMD=
 fi
 
+DNS_OPTS=""
+DNS_IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' dns 2> /dev/null || :)
+if [[ -n "$DNS_IP" ]]; then
+    echo "local dns server ip: $DNS_IP"
+    DNS_OPTS="--dns $DNS_IP --dns-search $DOMAIN"
+else
+    echo "no local dns server found"
+fi
+
+echo "starting container $NAME"
 DOCKER_ID=$(docker run -d \
     -v $(pwd):/docker \
     -w /docker \
     -h $NAME \
     --name=$NAME \
+    $DNS_OPTS \
     $IMAGE \
     $CMD)
 
 IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $DOCKER_ID)
+echo "container id: $DOCKER_ID"
+echo "container ip: $IP"
 
-for OLD_NAME in $(grep -l $NAME $DNSMASQ_D/*); do
-    rm -fv $OLD_NAME
-done
-for OLD_IP in $(grep -l $IP $DNSMASQ_D/*); do
-    rm -fv $OLD_IP
-done
+if [[ -n "$DNS_IP" ]]; then
+    echo "adding to local dns"
+    curl -X PUT -d '{"Node": "'$NAME'", "Address": "'$IP'"}' localhost:8500/v1/catalog/register
 
-echo "address=/$NAME/$IP" >  $DNSMASQ_D/$NAME
-#ssh-keygen -f "$HOME/.ssh/known_hosts" -R $NAME
-
-if [[ -x /usr/bin/systemctl ]]; then
-    sudo systemctl restart dnsmasq
-else
-    sudo service dnsmasq restart
+    echo "rechecking local dns"
+    dig +short $NAME.$DOMAIN
 fi
 
 echo "$NAME/$IP started"
+echo
