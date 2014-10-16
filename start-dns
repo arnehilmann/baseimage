@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e -E -u
+
+DNS_HOSTNAME=dns
+
+docker rm dns 2> /dev/null || :
+
+docker run -d -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h $DNS_HOSTNAME --name $DNS_HOSTNAME progrium/consul -server -bootstrap > /dev/null
+
+IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $DNS_HOSTNAME)
+
+echo "the local dns service is up and running"
+echo
+echo "to learn more about your dns service, use"
+echo "    curl localhost:8500/v1/catalog/node/dns"
+echo
+echo "also remember to direct your dns queries to the dns port"
+echo "(e.g. 'dig -p 8600 <YOUR_HOSTNAME>')"
+echo
+echo "Even better: use dnsmasq and add the files under 'resources' to your installation;"
+echo "then you can use all your dns tools without any special parameters."
