@@ -9,7 +9,7 @@ RUN apt-get upgrade -y
 
 # Install additional packages
 RUN apt-get install -y less curl man unixodbc libssl1.0.0 libwxgtk2.8-0 make
-RUN apt-get install -y host git wget
+RUN apt-get install -y host git wget python
 RUN apt-get install -y --reinstall openssh-server
 
 # create host keys
