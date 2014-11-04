@@ -22,10 +22,14 @@ if docker inspect $NAME > /dev/null 2>&1; then
     echo "housekeeping finished"
 fi
 
-if [[ -x ./init ]]; then
-    CMD=./init
-else
-    CMD=
+OPTS="$USER $(id -u $USER)"
+
+PUBLIC_KEY_FILE=$HOME/.ssh/id_rsa.pub
+if [[ -r $PUBLIC_KEY_FILE ]]; then
+    TMP_DIR=tmp/ssh.pub.key
+    mkdir -p $TMP_DIR
+    cp $PUBLIC_KEY_FILE $TMP_DIR
+    OPTS="$OPTS $TMP_DIR"
 fi
 
 DNS_OPTS=""
@@ -45,7 +49,7 @@ DOCKER_ID=$(docker run -d \
     --name=$NAME \
     $DNS_OPTS \
     $IMAGE \
-    $CMD)
+    $OPTS)
 
 IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' $DOCKER_ID)
 echo "container id: $DOCKER_ID"
