@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e -E -u
+
+USER=${1:-}
+USERID=${2:-}
+PUBLIC_KEY_DIR=${3:-}
+
+[[ -z $USER ]] && exit 1
+[[ -z $USERID ]] && exit 1
+
+echo "creating user $USER with id $USERID"
+
+mkdir -p /home/$USER
+useradd -u $USERID -r -g users -d /home/$USER -s /bin/bash -c "Docker image user" $USER
+chown -R $USER:users /home/$USER
+echo "$USER:$USER" | chpasswd
+
+mkdir -p /home/$USER/.ssh
+ssh-keygen -q -t rsa -f /home/$USER/.ssh/id_rsa -N ''
+cp /home/$USER/.ssh/id_rsa.pub /home/$USER/.ssh/authorized_keys
+
+echo "public key dir given: $PUBLIC_KEY_DIR"
+if [[ -n $PUBLIC_KEY_DIR ]]; then
+    cp $PUBLIC_KEY_DIR/*.pub /home/$USER/.ssh/authorized_keys2
+fi
+
+chown -R $USER:users /home/$USER
+chown -R $USER:users /home/$USER/.ssh/
+
