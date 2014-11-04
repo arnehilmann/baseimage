@@ -12,8 +12,5 @@ latest:	image
 image: image/Dockerfile
 	docker build -t "$(IMG)" image
 
-image/Dockerfile: image/*
-	image/create-dockerfile
-
 clean:
 	rm -f image/$(PREFIX).tar.gz

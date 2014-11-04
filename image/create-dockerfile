@@ -1,6 +1,0 @@
-#!/bin/bash
-
-cd $(dirname $0)
-mkdir -p tmp
-cp ~/.ssh/id_rsa.pub tmp/
-sed "s/\$USERID/$(id -u)/g;s/\$USER/$USER/g;s/\$HOSTNAME/$(hostname)/g" Dockerfile.in > Dockerfile
