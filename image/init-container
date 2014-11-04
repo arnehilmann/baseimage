@@ -1,12 +1,18 @@
 #!/bin/bash
 
+exec 1> "/tmp/init-container-$HOSTNAME.log" 2>&1
+
 export HOST_DIR="/docker"
 export LOG_DIR="$HOST_DIR/logs"
+export LOG_FILE="$LOG_DIR/$HOSTNAME.log"
+
+/create-user $@
+
+USER=$1
 
 su $USER -c "mkdir -p \"$LOG_DIR\""
-exec 1> "$LOG_DIR/$HOSTNAME.log" 2>&1
-
-USER=$1 && shift
+echo "switching log file to $LOG_FILE"
+exec 1> "$LOG_FILE" 2>&1
 
 INIT_APPLICATION_SCRIPT="$HOST_DIR/init-application"
 
