@@ -15,7 +15,7 @@ echo "to learn more about your dns service, use"
 echo "    curl localhost:8500/v1/catalog/node/dns"
 echo
 echo "also remember to direct your dns queries to the dns port"
-echo "(e.g. 'dig -p 8600 <YOUR_HOSTNAME>')"
+echo "(e.g. 'dig -p 8600 <YOUR_HOSTNAME>.node.consul')"
 echo
 echo "Even better: use dnsmasq and add the files under 'resources' to your installation;"
 echo "then you can use all your dns tools without any special parameters."
