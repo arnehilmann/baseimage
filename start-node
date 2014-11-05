@@ -8,11 +8,11 @@ NAME="node$NR"
 DOMAIN="node.consul"
 
 if docker inspect $NAME > /dev/null 2>&1; then
-    echo "housekeeping started"
     echo "container $NAME already known"
+    echo "housekeeping started"
     echo -n "stopping "
     docker stop $NAME
-    docker stop $NAME
+    #docker stop $NAME
     sleep 1
     echo -n "removing "
     if ! docker rm $NAME; then
@@ -35,7 +35,7 @@ fi
 DNS_OPTS=""
 DNS_IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' dns 2> /dev/null || :)
 if [[ -n "$DNS_IP" ]]; then
-    echo "local dns server ip: $DNS_IP"
+    echo "local dns server: $DNS_IP"
     DNS_OPTS="--dns $DNS_IP --dns-search $DOMAIN"
 else
     echo "no local dns server found"
@@ -56,10 +56,11 @@ echo "container id: $DOCKER_ID"
 echo "container ip: $IP"
 
 if [[ -n "$DNS_IP" ]]; then
-    echo "adding to local dns"
+    echo -n "adding to local dns: "
     curl -X PUT -d '{"Node": "'$NAME'", "Address": "'$IP'"}' localhost:8500/v1/catalog/register
+    echo
 
-    echo "rechecking local dns"
+    echo -n "rechecking local dns: "
     dig +short $NAME.$DOMAIN
 fi
 
