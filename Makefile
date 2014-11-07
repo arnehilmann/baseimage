@@ -1,4 +1,4 @@
-VSN = 0.2
+VSN = 0.3
 IMG = arne/baseimage:$(VSN)
 IMG_LATEST = arne/baseimage:latest
 

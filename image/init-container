@@ -6,9 +6,14 @@ export HOST_DIR="/docker"
 export LOG_DIR="$HOST_DIR/logs"
 export LOG_FILE="$LOG_DIR/$HOSTNAME.log"
 
-/create-user $@
+INIT_HOST_SCRIPT="$HOST_DIR/init-host"
+if [[ -x "$INIT_HOST_SCRIPT" ]]; then
+    echo "running $INIT_HOST_SCRIPT"
+    $INIT_HOST_SCRIPT
+fi
 
 USER=$1
+/create-user $@
 
 su $USER -c "mkdir -p \"$LOG_DIR\""
 echo "switching log file to $LOG_FILE"
