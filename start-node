@@ -7,19 +7,21 @@ NR=${1:-1}
 NAME="node$NR"
 DOMAIN="node.consul"
 
+echo "Starting $NAME, based on $IMAGE"
+
 if docker inspect $NAME > /dev/null 2>&1; then
-    echo "container $NAME already known"
-    echo "housekeeping started"
-    echo -n "stopping "
+    echo ". container $NAME already known, initiating housekeeping"
+    echo -n ". stopping "
     docker stop $NAME
     #docker stop $NAME
     sleep 1
-    echo -n "removing "
+    echo -n ". removing "
     if ! docker rm $NAME; then
+        echo
         echo "cannot remove container $NAME, aborting..."
         exit 2
     fi
-    echo "housekeeping finished"
+    echo ". housekeeping finished"
 fi
 
 OPTS="$USER $(id -u $USER)"
