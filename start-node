@@ -1,5 +1,6 @@
 #!/bin/bash
 set -u -e -E -C -o pipefail
+set -x
 
 IMAGE=${DOCKER_IMAGE:-arne/baseimage}
 
@@ -31,7 +32,7 @@ rm -rf $TMP_DIR && mkdir -p $TMP_DIR
 
 PROFILED_DIR=$TMP_DIR/etc/profile.d
 mkdir -p $PROFILED_DIR
-env | grep -i proxy | sed "s/^/export /" > $PROFILED_DIR/proxies.sh
+env | grep -i proxy | sed "s/^/export /" > $PROFILED_DIR/proxies.sh || :
 chmod -R a+rx $PROFILED_DIR
 
 PUBLIC_KEY_FILE=$HOME/.ssh/id_rsa.pub
