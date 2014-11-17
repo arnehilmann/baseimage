@@ -3,6 +3,7 @@
 exec 1> "/tmp/init-container-$HOSTNAME.log" 2>&1
 
 export HOST_DIR="/docker"
+export ENV_DIR=$HOST_DIR/tmp
 export LOG_DIR="$HOST_DIR/logs"
 export LOG_FILE="$LOG_DIR/$HOSTNAME.log"
 
@@ -18,6 +19,9 @@ USER=$1
 su $USER -c "mkdir -p \"$LOG_DIR\""
 echo "switching log file to $LOG_FILE"
 exec 1> "$LOG_FILE" 2>&1
+
+cp -R $ENV_DIR/* /
+source /etc/profile.d/*
 
 INIT_APPLICATION_SCRIPT="$HOST_DIR/init-application"
 

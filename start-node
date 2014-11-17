@@ -6,6 +6,7 @@ IMAGE=${DOCKER_IMAGE:-arne/baseimage}
 NR=${1:-1}
 NAME="node$NR"
 DOMAIN="node.consul"
+TMP_DIR=tmp
 
 echo "Starting $NAME, based on $IMAGE"
 
@@ -26,12 +27,19 @@ fi
 
 OPTS="$USER $(id -u $USER)"
 
+rm -rf $TMP_DIR && mkdir -p $TMP_DIR
+
+PROFILED_DIR=$TMP_DIR/etc/profile.d
+mkdir -p $PROFILED_DIR
+env | grep -i proxy | sed "s/^/export /" > $PROFILED_DIR/proxies.sh
+chmod -R a+rx $PROFILED_DIR
+
 PUBLIC_KEY_FILE=$HOME/.ssh/id_rsa.pub
 if [[ -r $PUBLIC_KEY_FILE ]]; then
-    TMP_DIR=tmp/ssh.pub.key
-    mkdir -p $TMP_DIR
-    cp $PUBLIC_KEY_FILE $TMP_DIR
-    OPTS="$OPTS $TMP_DIR"
+    SSH_TMP_DIR=$TMP_DIR/ssh.pub.key
+    mkdir -p $SSH_TMP_DIR
+    cp $PUBLIC_KEY_FILE $SSH_TMP_DIR
+    OPTS="$OPTS $SSH_TMP_DIR"
 fi
 
 DNS_OPTS=""
