@@ -1,12 +1,11 @@
 #!/bin/bash
 set -u -e -E -C -o pipefail
-set -x
 
 IMAGE=${DOCKER_IMAGE:-arne/baseimage}
 
 NR=${1:-1}
-NAME="node$NR"
 DOMAIN="node.consul"
+NAME="node$NR.$DOMAIN"
 TMP_DIR=tmp
 
 echo "Starting $NAME, based on $IMAGE"
@@ -47,7 +46,7 @@ DNS_OPTS=""
 DNS_IP=$(docker inspect --format='{{.NetworkSettings.IPAddress}}' dns 2> /dev/null || :)
 if [[ -n "$DNS_IP" ]]; then
     echo "local dns server: $DNS_IP"
-    DNS_OPTS="--dns $DNS_IP --dns-search $DOMAIN"
+    DNS_OPTS="--dns $DNS_IP" # --dns-search $DOMAIN"
 else
     echo "no local dns server found"
 fi
@@ -68,11 +67,12 @@ echo "container ip: $IP"
 
 if [[ -n "$DNS_IP" ]]; then
     echo -n "adding to local dns: "
-    curl -X PUT -d '{"Node": "'$NAME'", "Address": "'$IP'"}' localhost:8500/v1/catalog/register
+    H_NAME=$(sed "s/\..*//" <<< $NAME)
+    curl -X PUT -d '{"Node": "'$H_NAME'", "Address": "'$IP'"}' localhost:8500/v1/catalog/register
     echo
 
     echo -n "rechecking local dns: "
-    dig +short $NAME.$DOMAIN
+    dig +short $NAME
 fi
 
 echo "$NAME/$IP started"
